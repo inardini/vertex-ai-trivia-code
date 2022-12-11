@@ -1,14 +1,10 @@
 from kfp.v2.dsl import component
 from typing import NamedTuple
 
-OUTPUT_COMPONENT_FILE = "batch_serve_features_gcs.yaml"
-BASE_IMAGE = "python:3.9"
-PACKAGES_TO_INSTALL = ["google-cloud-aiplatform"]
 
-
-@component(output_component_file=OUTPUT_COMPONENT_FILE,
-           base_image=BASE_IMAGE,
-           packages_to_install=PACKAGES_TO_INSTALL)
+@component(output_component_file="batch_serve_features_gcs.yaml",
+           base_image="python:3.9",
+           packages_to_install=["google-cloud-aiplatform"])
 def batch_serve_features_gcs(feature_store_id: str,
                              gcs_destination_output_uri_prefix: str,
                              gcs_destination_type: str,
