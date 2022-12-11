@@ -1,7 +1,7 @@
 import os.path
 
 from kfp.v2.dsl import component
-from typing import Dict, List, NamedTuple
+from typing import NamedTuple
 
 OUTPUT_COMPONENT_FILE = "batch_serve_features_gcs.yaml"
 BASE_IMAGE = "python:3.9"
@@ -14,12 +14,13 @@ PACKAGES_TO_INSTALL = ["google-cloud-aiplatform"]
 def batch_serve_features_gcs(feature_store_id: str,
                              gcs_destination_output_uri_prefix: str,
                              gcs_destination_type: str,
-                             serving_feature_ids: Dict[str, List[str]],
+                             serving_feature_ids: str,
                              read_instances_uri: str,
                              project: str,
-                             location: str) -> NamedTuple("Outputs", [("gcs_destination_output_uri_paths", str), ], ):
+                             location: str) -> NamedTuple("Outputs", [("gcs_destination_output_uri_paths", str)]):
     # Import libraries
     import os
+    from json import loads
     from google.cloud import aiplatform
     from google.cloud.aiplatform.featurestore import Featurestore
 
@@ -30,6 +31,7 @@ def batch_serve_features_gcs(feature_store_id: str,
     featurestore = Featurestore(featurestore_name=feature_store_id)
 
     # Serve features in batch on GCS
+    serving_feature_ids = loads(serving_feature_ids)
     featurestore.batch_serve_to_gcs(
         gcs_destination_output_uri_prefix=gcs_destination_output_uri_prefix,
         gcs_destination_type=gcs_destination_type,
