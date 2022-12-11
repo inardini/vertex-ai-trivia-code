@@ -30,7 +30,7 @@ def ingest_features_df(
     # Initialize the Vertex SDK for Python
     aiplatform.init(project=project, location=location)
 
-    # Get the entity type
+    # Get the entity type from an existing Featurestore
     entity_type = aiplatform.featurestore.EntityType(entity_type_id=entity_type_id,
                                                      featurestore_id=featurestore_id)
     # Ingest the features

@@ -1,0 +1,76 @@
+name: Batch serve features gcs
+inputs:
+- {name: feature_store_id, type: String}
+- {name: gcs_destination_output_uri_prefix, type: String}
+- {name: gcs_destination_type, type: String}
+- {name: serving_feature_ids, type: 'typing.Dict[str, typing.List[str]]'}
+- {name: read_instances_uri, type: String}
+- {name: project, type: String}
+- {name: location, type: String}
+outputs:
+- {name: gcs_destination_output_uri_paths, type: String}
+implementation:
+  container:
+    image: python:3.9
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'kfp==1.8.17' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - |2+
+
+      import kfp
+      from kfp.v2 import dsl
+      from kfp.v2.dsl import *
+      from typing import *
+
+      def batch_serve_features_gcs(feature_store_id: str,
+                                   gcs_destination_output_uri_prefix: str,
+                                   gcs_destination_type: str,
+                                   serving_feature_ids: Dict[str, List[str]],
+                                   read_instances_uri: str,
+                                   project: str,
+                                   location: str) -> NamedTuple("Outputs", [("gcs_destination_output_uri_paths", str), ], ):
+          # Import libraries
+          import os
+          from google.cloud import aiplatform
+          from google.cloud.aiplatform.featurestore import Featurestore
+
+          # Initialize Vertex AI client
+          aiplatform.init(project=project, location=location)
+
+          # Initiate feature store and run batch serve request
+          featurestore = Featurestore(featurestore_name=feature_store_id)
+
+          # Serve features in batch on GCS
+          featurestore.batch_serve_to_gcs(
+              gcs_destination_output_uri_prefix=gcs_destination_output_uri_prefix,
+              gcs_destination_type=gcs_destination_type,
+              serving_feature_ids=serving_feature_ids,
+              read_instances_uri=read_instances_uri
+          )
+
+          # Store metadata
+          gcs_destination_output_path_prefix = gcs_destination_output_uri_prefix.replace("gcs://", "/gcs/")
+          gcs_destination_output_paths = os.path.join(gcs_destination_output_path_prefix, "*.csv")
+          component_outputs = NamedTuple("Outputs",
+                                         [("gcs_destination_output_uri_paths", str), ], )
+
+          return component_outputs(gcs_destination_output_paths)
+
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - batch_serve_features_gcs
