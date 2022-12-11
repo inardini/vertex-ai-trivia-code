@@ -3,7 +3,7 @@ inputs:
 - {name: feature_store_id, type: String}
 - {name: gcs_destination_output_uri_prefix, type: String}
 - {name: gcs_destination_type, type: String}
-- {name: serving_feature_ids, type: 'typing.Dict[str, typing.List[str]]'}
+- {name: serving_feature_ids, type: String}
 - {name: read_instances_uri, type: String}
 - {name: project, type: String}
 - {name: location, type: String}
@@ -38,12 +38,13 @@ implementation:
       def batch_serve_features_gcs(feature_store_id: str,
                                    gcs_destination_output_uri_prefix: str,
                                    gcs_destination_type: str,
-                                   serving_feature_ids: Dict[str, List[str]],
+                                   serving_feature_ids: str,
                                    read_instances_uri: str,
                                    project: str,
-                                   location: str) -> NamedTuple("Outputs", [("gcs_destination_output_uri_paths", str), ], ):
+                                   location: str) -> NamedTuple("Outputs", [("gcs_destination_output_uri_paths", str)]):
           # Import libraries
           import os
+          from json import loads
           from google.cloud import aiplatform
           from google.cloud.aiplatform.featurestore import Featurestore
 
@@ -54,6 +55,7 @@ implementation:
           featurestore = Featurestore(featurestore_name=feature_store_id)
 
           # Serve features in batch on GCS
+          serving_feature_ids = loads(serving_feature_ids)
           featurestore.batch_serve_to_gcs(
               gcs_destination_output_uri_prefix=gcs_destination_output_uri_prefix,
               gcs_destination_type=gcs_destination_type,

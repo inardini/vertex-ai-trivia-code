@@ -1,5 +1,3 @@
-import os.path
-
 from kfp.v2.dsl import component
 from typing import NamedTuple
 
