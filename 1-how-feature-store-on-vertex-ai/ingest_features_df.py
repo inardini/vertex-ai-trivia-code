@@ -12,7 +12,7 @@ def ingest_features_df(
     feature_time: str,
     features_df: DataFrame,
     entity_id_field: str
-) -> None:
+) -> aiplatform.featurestore.EntityType:
     """
     Ingests features into a Featurestore from a Pandas DataFrame.
     Args:
@@ -40,3 +40,6 @@ def ingest_features_df(
         df_source=features_df,
         entity_id_field=entity_id_field
     )
+
+    return entity_type
+
